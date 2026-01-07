@@ -1,0 +1,68 @@
+import subprocess
+import time
+import sys
+import os
+
+# --- CONFIGURATION DES NOMS DE FICHIERS ---
+SCRIPT_TRAIN = "1_train_ai"
+SCRIPT_SENSOR = "2_sensor_iot"
+SCRIPT_DASHBOARD = "3_dashboard"
+
+def verifier_fichiers():
+    fichiers = [SCRIPT_TRAIN, SCRIPT_SENSOR, SCRIPT_DASHBOARD]
+    manquants = [f for f in fichiers if not os.path.exists(f)]
+    if manquants:
+        print(f"❌ ERREUR : Il manque ces fichiers dans le dossier : {manquants}")
+        print("Assure-toi d'avoir enregistré les 3 codes précédents avec ces noms exacts.")
+        input("Appuie sur Entrée pour quitter...")
+        sys.exit()
+
+def lancer_script_dans_nouvelle_fenetre(script_name, titre):
+    """
+    Ouvre une nouvelle fenêtre de terminal pour exécuter le script.
+    Fonctionne spécifiquement pour Windows.
+    """
+    print(f"🚀 Lancement de {titre}...")
+    # La commande 'start cmd /k' ouvre une nouvelle fenêtre CMD et la garde ouverte
+    # sys.executable assure qu'on utilise le même python (pas d'erreur de path)
+    commande = f'start "{titre}" cmd /k "{sys.executable} {script_name}"'
+    subprocess.Popen(commande, shell=True)
+
+def main():
+    print("==================================================")
+    print("   DEMARRAGE DU SYSTEME MICROGRID INTELLIGENT")
+    print("==================================================")
+    
+    verifier_fichiers()
+
+    # ETAPE 1 : L'ENTRAINEMENT (Bloquant)
+    # On doit attendre que l'IA soit créée avant de lancer le reste
+    if not os.path.exists("my_brain.h5"):
+        print("⚠️  Aucune IA détectée. Lancement de l'entraînement...")
+        print("⏳  Veuillez patienter (cela peut prendre 1 à 2 minutes)...")
+        # Ici on utilise call pour bloquer le programme tant que ce n'est pas fini
+        subprocess.check_call([sys.executable, SCRIPT_TRAIN])
+        print("✅  Entraînement terminé !")
+    else:
+        print("✅  IA détectée (my_brain.h5). On passe à la suite.")
+
+    time.sleep(1)
+
+    # ETAPE 2 : LE DASHBOARD (Nouvelle fenêtre)
+    # On le lance en premier pour qu'il soit prêt à recevoir
+    lancer_script_dans_nouvelle_fenetre(SCRIPT_DASHBOARD, "3. DASHBOARD (CENTRE DE CONTROLE)")
+    
+    print("⏳  Attente de 5 secondes pour l'initialisation du Dashboard...")
+    time.sleep(5)
+
+    # ETAPE 3 : LE CAPTEUR (Nouvelle fenêtre)
+    lancer_script_dans_nouvelle_fenetre(SCRIPT_SENSOR, "2. CAPTEUR IOT (SIMULATION)")
+
+    print("\n🎉  TOUT EST LANCE !")
+    print("Check tes barres de tâches, tu as maintenant 2 nouvelles fenêtres noires.")
+    print(" - Une fenêtre affiche le GRAPHIQUE")
+    print(" - Une fenêtre envoie les DONNÉES")
+    print("==================================================")
+
+if __name__ == "__main__":
+    main()

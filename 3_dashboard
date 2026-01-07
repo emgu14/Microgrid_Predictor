@@ -1,0 +1,104 @@
+import paho.mqtt.client as mqtt
+import numpy as np
+import json
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from tensorflow.keras.models import load_model
+import joblib
+import os
+
+print("🚀 ÉTAPE 3 : DASHBOARD INTELLIGENT")
+
+# Configuration
+BROKER = "broker.emqx.io"
+PORT = 1883
+TOPIC = "projet/tunisie/microgrid/v1"
+
+if not os.path.exists('my_brain.h5'):
+    print("❌ ERREUR : Lance le fichier 1_train.py d'abord !")
+    exit()
+
+print("📥 Chargement de l'IA...")
+model = load_model('my_brain.h5')
+scaler = joblib.load('my_scaler.pkl')
+
+historique_reel = []
+historique_pred = []
+alerte_status = "En attente de données..."
+
+def on_message(client, userdata, msg):
+    global alerte_status
+    try:
+        # Réception
+        payload = json.loads(msg.payload.decode())
+        sequence = np.array(payload["data"]) # Forme (24, 1)
+        
+        # --- CORRECTION DE L'ERREUR DIM 3 ---
+        # sequence[-1] est une liste [valeur], on veut juste la valeur
+        valeur_reelle_scaled = sequence[-1][0] 
+        
+        # Prédiction
+        input_data = sequence.reshape(1, 24, 1)
+        pred_scaled = model.predict(input_data, verbose=0)
+        
+        # Conversion (Dénormalisation)
+        valeur_reelle = scaler.inverse_transform([[valeur_reelle_scaled]])[0][0]
+        prediction = scaler.inverse_transform(pred_scaled)[0][0]
+        
+        # Stockage
+        historique_reel.append(valeur_reelle)
+        historique_pred.append(prediction)
+        
+        if len(historique_reel) > 40:
+            historique_reel.pop(0)
+            historique_pred.pop(0)
+
+        # Alerte
+        if prediction > 2.0:
+            alerte_status = f"⚠️ ALERTE PIC ({prediction:.2f} kW)"
+            print(f"⚠️ PIC DETECTÉ : {prediction:.2f} kW")
+        else:
+            alerte_status = "✅ RESEAU STABLE"
+            print(f"Reçu: {valeur_reelle:.2f} | Prédit: {prediction:.2f}")
+
+    except Exception as e:
+        print(f"Erreur traitement : {e}")
+
+# MQTT Setup
+client = mqtt.Client(client_id="Dashboard_Visu")
+client.on_message = on_message
+
+try:
+    print(f"🔌 Connexion au Dashboard sur {BROKER}...")
+    client.connect(BROKER, PORT, 60)
+    client.subscribe(TOPIC)
+    client.loop_start()
+except Exception as e:
+    print(f"❌ Erreur connexion : {e}")
+    exit()
+
+# Graphique
+fig, ax = plt.subplots(figsize=(10, 6))
+
+def animate(i):
+    ax.clear()
+    ax.plot(historique_reel, label='Conso Réelle (kW)', color='lime')
+    ax.plot(historique_pred, label='Prédiction IA (kW)', color='orange', linestyle='--')
+    ax.axhline(y=2.0, color='red', linestyle=':', label='Seuil Max')
+    
+    ax.set_title(f"MONITORING MICROGRID\nStatus: {alerte_status}", fontweight='bold')
+    ax.legend(loc='upper left')
+    ax.grid(True, alpha=0.3)
+    
+    # Mode sombre pour le style
+    ax.set_facecolor('#222222')
+    fig.patch.set_facecolor('#222222')
+    ax.tick_params(colors='white')
+    ax.xaxis.label.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.title.set_color('white')
+    legend = ax.legend(loc='upper left')
+    plt.setp(legend.get_texts(), color='black')
+
+ani = animation.FuncAnimation(fig, animate, interval=1000, cache_frame_data=False)
+plt.show()
