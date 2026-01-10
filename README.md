@@ -61,7 +61,7 @@ Lancer le Simulateur de Capteur dans une nouvelle fenêtre console.
 
 ### Dataset Utilisé
 Nom : Individual Household Electric Power Consumption
-Source : UCI Machine Learning Repository
+Source : UCI Machine Learning Repository (https://archive.ics.uci.edu/dataset/235/individual+household+electric+power+consumption)
 Détails : 2 075 259 mesures collectées dans une maison en France entre 2006 et 2010.
 ### Stack Technique
 Langage : Python 3.12
