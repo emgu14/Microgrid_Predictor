@@ -6,3 +6,4 @@ tensorflow
 paho-mqtt
 ucimlrepo
 joblib
+streamlit

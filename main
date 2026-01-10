@@ -2,67 +2,59 @@ import subprocess
 import time
 import sys
 import os
+import webbrowser
 
-# --- CONFIGURATION DES NOMS DE FICHIERS ---
-SCRIPT_TRAIN = "1_train_ai"
-SCRIPT_SENSOR = "2_sensor_iot"
-SCRIPT_DASHBOARD = "3_dashboard"
+# --- CONFIGURATION ---
+SCRIPT_TRAIN = "1_train.py"
+SCRIPT_SENSOR = "2_sensor.py"
+SCRIPT_APP = "app_monitoring.py"
 
 def verifier_fichiers():
-    fichiers = [SCRIPT_TRAIN, SCRIPT_SENSOR, SCRIPT_DASHBOARD]
+    fichiers = [SCRIPT_TRAIN, SCRIPT_SENSOR, SCRIPT_APP]
     manquants = [f for f in fichiers if not os.path.exists(f)]
     if manquants:
-        print(f"❌ ERREUR : Il manque ces fichiers dans le dossier : {manquants}")
-        print("Assure-toi d'avoir enregistré les 3 codes précédents avec ces noms exacts.")
+        print(f"❌ ERREUR : Fichiers manquants : {manquants}")
         input("Appuie sur Entrée pour quitter...")
         sys.exit()
 
-def lancer_script_dans_nouvelle_fenetre(script_name, titre):
-    """
-    Ouvre une nouvelle fenêtre de terminal pour exécuter le script.
-    Fonctionne spécifiquement pour Windows.
-    """
-    print(f"🚀 Lancement de {titre}...")
-    # La commande 'start cmd /k' ouvre une nouvelle fenêtre CMD et la garde ouverte
-    # sys.executable assure qu'on utilise le même python (pas d'erreur de path)
-    commande = f'start "{titre}" cmd /k "{sys.executable} {script_name}"'
+def lancer_capteur_nouvelle_fenetre():
+    print(f"🚀 Lancement du Capteur IoT ({SCRIPT_SENSOR})...")
+    # Ouvre une fenêtre noire séparée pour le capteur
+    commande = f'start "2. CAPTEUR IOT" cmd /k "{sys.executable} {SCRIPT_SENSOR}"'
     subprocess.Popen(commande, shell=True)
 
 def main():
     print("==================================================")
-    print("   DEMARRAGE DU SYSTEME MICROGRID INTELLIGENT")
+    print("   🚀 STARTUP : MICROGRID AI MONITORING V2.0")
     print("==================================================")
     
     verifier_fichiers()
 
-    # ETAPE 1 : L'ENTRAINEMENT (Bloquant)
-    # On doit attendre que l'IA soit créée avant de lancer le reste
+    # 1. ENTRAINEMENT (Si besoin)
     if not os.path.exists("my_brain.h5"):
-        print("⚠️  Aucune IA détectée. Lancement de l'entraînement...")
-        print("⏳  Veuillez patienter (cela peut prendre 1 à 2 minutes)...")
-        # Ici on utilise call pour bloquer le programme tant que ce n'est pas fini
+        print("⚠️  IA non détectée. Initialisation de l'entraînement...")
         subprocess.check_call([sys.executable, SCRIPT_TRAIN])
-        print("✅  Entraînement terminé !")
+        print("✅  IA Prête !")
     else:
-        print("✅  IA détectée (my_brain.h5). On passe à la suite.")
+        print("✅  IA détectée. Démarrage rapide.")
 
     time.sleep(1)
 
-    # ETAPE 2 : LE DASHBOARD (Nouvelle fenêtre)
-    # On le lance en premier pour qu'il soit prêt à recevoir
-    lancer_script_dans_nouvelle_fenetre(SCRIPT_DASHBOARD, "3. DASHBOARD (CENTRE DE CONTROLE)")
+    # 2. LANCEMENT DU CAPTEUR (Fenêtre noire)
+    lancer_capteur_nouvelle_fenetre()
     
-    print("⏳  Attente de 5 secondes pour l'initialisation du Dashboard...")
-    time.sleep(5)
+    print("⏳  Démarrage du Serveur Web Streamlit...")
+    time.sleep(2)
 
-    # ETAPE 3 : LE CAPTEUR (Nouvelle fenêtre)
-    lancer_script_dans_nouvelle_fenetre(SCRIPT_SENSOR, "2. CAPTEUR IOT (SIMULATION)")
-
-    print("\n🎉  TOUT EST LANCE !")
-    print("Check tes barres de tâches, tu as maintenant 2 nouvelles fenêtres noires.")
-    print(" - Une fenêtre affiche le GRAPHIQUE")
-    print(" - Une fenêtre envoie les DONNÉES")
+    # 3. LANCEMENT DE L'APPLICATION WEB (Dans le terminal principal)
+    # Streamlit va ouvrir ton navigateur Chrome/Edge tout seul
+    print("📺  Ouverture du Dashboard dans le navigateur...")
     print("==================================================")
+    print("   APPUYEZ SUR CTRL+C POUR ARRETER L'APPLICATION")
+    print("==================================================")
+    
+    # On lance streamlit run app_monitoring.py
+    subprocess.run(["streamlit", "run", SCRIPT_APP])
 
 if __name__ == "__main__":
     main()
