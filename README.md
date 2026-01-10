@@ -1,4 +1,4 @@
-# Smart Microgrid AI Manager
+# Smart Microgrid Predictor
 > **Un système intelligent de gestion énergétique pour Microgrids, combinant Deep Learning (LSTM) et simulation IoT temps réel.**
 
 ---
